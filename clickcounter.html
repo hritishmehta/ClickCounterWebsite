@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Click Counter</title>
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+	<style>
+		#chartContainer {
+			width: 600px;
+			height: 400px;
+			margin: 0 auto;
+		}
+	</style>
+</head>
+<body>
+	<h1>Click Counter</h1>
+	<button id="clickButton">Click Me</button>
+	<p>Number of clicks: <span id="clickCount">0</span></p>
+	<h2>Click Distribution by Geography</h2>
+	<div id="chartContainer"></div>
+	<script>
+		// Initialize Google Charts
+		google.charts.load('current', {'packages':['corechart']});
+
+		// Retrieve click count from local storage if available
+		var clickCount = localStorage.getItem("clickCount") || 0;
+		document.getElementById("clickCount").innerHTML = clickCount;
+
+		// Initialize country data object
+		var countryData = {};
+
+		// Handle click event on the button
+		document.getElementById("clickButton").addEventListener("click", function() {
+			clickCount++;
+			localStorage.setItem("clickCount", clickCount);
+			document.getElementById("clickCount").innerHTML = clickCount;
+
+			// Call IPInfo.io API to retrieve location information
+			$.getJSON("https://ipinfo.io/json", function(data) {
+				// Add location data to country data object
+				if (countryData[data.country]) {
+					countryData[data.country]++;
+				} else {
+					countryData[data.country] = 1;
+				}
+
+				// Draw the chart
+				drawChart();
+			});
+		});
+
+		// Draw the chart
+		function drawChart() {
+			// Create the data table
+			var data = new google.visualization.DataTable();
+			data.addColumn('string', 'Country');
+			data.addColumn('number', 'Clicks');
+			Object.keys(countryData).forEach(function(country) {
+				data.addRow([country, countryData[country]]);
+			});
+
+			// Set chart options
+			var options = {
+				title: 'Percentage of Clicks by Country',
+				pieHole: 0.4,
+				width: 600,
+				height: 400
+			};
+
+			// Instantiate and draw the chart
+			var chart = new google.visualization.PieChart(document.getElementById('chartContainer'));
+			chart.draw(data, options);
+		}
+
+		// Load the Google Charts package and draw the initial chart
+		google.charts.setOnLoadCallback(drawChart);
+	</script>
+</body>
+</html>
